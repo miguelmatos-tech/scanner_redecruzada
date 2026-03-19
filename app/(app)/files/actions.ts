@@ -15,10 +15,16 @@ import { randomUUID } from "crypto"
 import { mkdir, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
+import { fileUploadRateLimiter } from "@/lib/rate-limit"
 
 export async function uploadFilesAction(formData: FormData): Promise<ActionState<null>> {
   const user = await getCurrentUser()
   const files = formData.getAll("files") as File[]
+
+  // 🛡️ SECURITY PATCH: Rate Limiting
+  if (!fileUploadRateLimiter.check(user.id)) {
+    return { success: false, error: "Too many upload requests. Please try again later." }
+  }
 
   // Make sure upload dir exists
   const userUploadsDirectory = getUserUploadsDirectory(user)
@@ -44,6 +50,11 @@ export async function uploadFilesAction(formData: FormData): Promise<ActionState
       }
 
       // Save file to filesystem
+      const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf", "application/xml", "text/xml"]
+      if (!allowedMimeTypes.includes(file.type)) {
+        return { success: false, error: `Invalid file type: ${file.type}. Allowed: images, PDF, XML.` }
+      }
+
       const fileUuid = randomUUID()
       const relativeFilePath = unsortedFilePath(fileUuid, file.name)
       const arrayBuffer = await file.arrayBuffer()

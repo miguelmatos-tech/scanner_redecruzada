@@ -25,7 +25,7 @@ export function PricingCard({ plan, hideButton = false }: { plan: Plan; hideButt
         window.location.href = data.session.url
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An unknown error occurred")
+      setError(error instanceof Error ? error.message : "Ocorreu um erro desconhecido")
     } finally {
       setIsLoading(false)
     }
@@ -52,7 +52,7 @@ export function PricingCard({ plan, hideButton = false }: { plan: Plan; hideButt
       <CardFooter className="flex flex-col gap-2 relative">
         {!hideButton && (
           <Button className="w-full" onClick={handleClick} disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Get Started"}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Começar Agora"}
           </Button>
         )}
         {error && <FormError>{error}</FormError>}

@@ -14,14 +14,14 @@ export default async function SelfHostedWelcomePage() {
       <Card className="w-full max-w-xl mx-auto p-8 flex flex-col items-center justify-center gap-6">
         <CardTitle className="text-2xl font-bold flex items-center gap-2">
           <ShieldAlert className="w-6 h-6" />
-          <span>Self-Hosted Mode is not enabled</span>
+          <span>Modo Self-Hosted não está ativado</span>
         </CardTitle>
         <CardDescription className="text-center text-lg flex flex-col gap-2">
           <p>
-            To use TaxHacker in self-hosted mode, please set <code className="font-bold">SELF_HOSTED_MODE=true</code> in
-            your environment.
+            Para usar a Rede Cruzada em modo auto-hospedado, defina <code className="font-bold">SELF_HOSTED_MODE=true</code> no
+            seu ambiente.
           </p>
-          <p>In self-hosted mode you can use your own ChatGPT API key and store your data on your own server.</p>
+          <p>No modo auto-hospedado você pode usar sua própria chave de API e armazenar seus dados no seu próprio servidor.</p>
         </CardDescription>
       </Card>
     )
@@ -43,10 +43,10 @@ export default async function SelfHostedWelcomePage() {
     <Card className="w-full max-w-xl mx-auto p-8 flex flex-col items-center justify-center gap-4">
       <Image src="/logo/512.png" alt="Logo" width={144} height={144} className="w-36 h-36" />
       <CardTitle className="text-3xl font-bold ">
-        <ColoredText>TaxHacker: Self-Hosted Edition</ColoredText>
+        <ColoredText>Rede Cruzada: Configuração Inicial</ColoredText>
       </CardTitle>
       <CardDescription className="flex flex-col gap-4 text-center text-lg">
-        <p>Welcome to your own instance of TaxHacker. Let&apos;s set up a couple of settings to get started.</p>
+        <p>Bem-vindo à sua instância da Rede Cruzada. Vamos configurar algumas opções para começar.</p>
         <SelfHostedSetupFormClient defaultProvider={defaultProvider} defaultApiKeys={defaultApiKeys} />
       </CardDescription>
     </Card>

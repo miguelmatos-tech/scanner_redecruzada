@@ -20,9 +20,12 @@ import { createTransaction, TransactionData, updateTransactionFiles } from "@/mo
 import { updateUser } from "@/models/users"
 import { Category, Field, File, Project, Transaction } from "@/prisma/client"
 import { randomUUID } from "crypto"
-import { mkdir, readFile, rename, writeFile } from "fs/promises"
+import { copyFile, mkdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
+import { aiRateLimiter } from "@/lib/rate-limit"
+import { isValidCNPJ } from "@/lib/cnpj-validator"
+import { parseNfeXml } from "@/lib/nfe-parser"
 
 export async function analyzeFileAction(
   file: File,
@@ -35,6 +38,11 @@ export async function analyzeFileAction(
 
   if (!file || file.userId !== user.id) {
     return { success: false, error: "File not found or does not belong to the user" }
+  }
+
+  // 🛡️ SECURITY PATCH: Rate limit AI requests to prevent unexpected billing.
+  if (!aiRateLimiter.check(user.id)) {
+    return { success: false, error: "Too many AI analysis requests. Maximum 5 per minute." }
   }
 
   if (isAiBalanceExhausted(user)) {
@@ -68,7 +76,25 @@ export async function analyzeFileAction(
 
   const schema = fieldsToJsonSchema(fields)
 
-  const results = await analyzeTransaction(prompt, schema, attachments, file.id, user.id)
+  // 🛡️ BRAZILIAN NF-e EXTENSION: Try to parse XML instantly avoiding AI costs.
+  let results: ActionState<AnalysisResult>;
+  
+  if (file.mimetype.includes("xml")) {
+    const userUploadsDirectory = getUserUploadsDirectory(user)
+    const originalFilePath = safePathJoin(userUploadsDirectory, file.path)
+    const fileContent = await readFile(originalFilePath, 'utf8')
+    const parsedData = parseNfeXml(fileContent)
+    
+    if (parsedData) {
+      console.log("Successfully parsed XML locally, skipped LLM!");
+      await updateFile(file.id, user.id, { cachedParseResult: parsedData.output })
+      results = { success: true, data: parsedData };
+    } else {
+      results = await analyzeTransaction(prompt, schema, attachments, file.id, user.id)
+    }
+  } else {
+    results = await analyzeTransaction(prompt, schema, attachments, file.id, user.id)
+  }
 
   console.log("Analysis results:", results)
 
@@ -91,6 +117,19 @@ export async function saveFileAsTransactionAction(
       return { success: false, error: validatedForm.error.message }
     }
 
+    // 🛡️ SECURITY & INTEGRITY PATCH: CNPJ Validation
+    // Scan extra fields for anything that looks like a CNPJ request
+    const extraFields = validatedForm.data.extra as Record<string, string>;
+    if (extraFields) {
+      for (const [key, value] of Object.entries(extraFields)) {
+        if (key.toUpperCase().includes("CNPJ") && value) {
+          if (!isValidCNPJ(value.toString())) {
+            return { success: false, error: `🚨 CNPJ Inválido lido pela IA (${value}). Por favor, corrija manualmente antes de salvar.` }
+          }
+        }
+      }
+    }
+
     // Get the file record
     const fileId = formData.get("fileId") as string
     const file = await getFileById(fileId, user.id)
@@ -108,7 +147,15 @@ export async function saveFileAsTransactionAction(
     const oldFullFilePath = safePathJoin(userUploadsDirectory, file.path)
     const newFullFilePath = safePathJoin(userUploadsDirectory, newRelativeFilePath)
     await mkdir(path.dirname(newFullFilePath), { recursive: true })
-    await rename(path.resolve(oldFullFilePath), path.resolve(newFullFilePath))
+    // Use copy+delete instead of rename to avoid EBUSY on Windows
+    await copyFile(path.resolve(oldFullFilePath), path.resolve(newFullFilePath))
+    try {
+      await unlink(path.resolve(oldFullFilePath))
+    } catch (unlinkError: any) {
+      // Ignore EBUSY on delete - the copy succeeded, file will be cleaned up later
+      if (unlinkError.code !== 'EBUSY') throw unlinkError
+      console.warn('Could not delete original file (EBUSY), will be cleaned up later:', oldFullFilePath)
+    }
 
     // Update file record
     await updateFile(file.id, user.id, {

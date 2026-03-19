@@ -104,12 +104,12 @@ export default function AnalyzeForm({
       setIsSaving(false)
 
       if (result.success) {
-        showNotification({ code: "global.banner", message: "Saved!", type: "success" })
+        showNotification({ code: "global.banner", message: "Salvo!", type: "success" })
         showNotification({ code: "sidebar.transactions", message: "new" })
         setTimeout(() => showNotification({ code: "sidebar.transactions", message: "" }), 3000)
       } else {
-        setSaveError(result.error ? result.error : "Something went wrong...")
-        showNotification({ code: "global.banner", message: "Failed to save", type: "failed" })
+        setSaveError(result.error ? result.error : "Algo deu errado...")
+        showNotification({ code: "global.banner", message: "Falha ao salvar", type: "failed" })
       }
     })
   }
@@ -118,13 +118,13 @@ export default function AnalyzeForm({
     setIsAnalyzing(true)
     setAnalyzeError("")
     try {
-      setAnalyzeStep("Analyzing...")
+      setAnalyzeStep("Analisando...")
       const results = await analyzeFileAction(file, settings, fields, categories, projects)
 
       console.log("Analysis results:", results)
 
       if (!results.success) {
-        setAnalyzeError(results.error ? results.error : "Something went wrong...")
+        setAnalyzeError(results.error ? results.error : "Algo deu errado...")
       } else {
         const nonEmptyFields = Object.fromEntries(
           Object.entries(results.data?.output || {}).filter(
@@ -135,7 +135,7 @@ export default function AnalyzeForm({
       }
     } catch (error) {
       console.error("Analysis failed:", error)
-      setAnalyzeError(error instanceof Error ? error.message : "Analysis failed")
+      setAnalyzeError(error instanceof Error ? error.message : "A análise falhou")
     } finally {
       setIsAnalyzing(false)
       setAnalyzeStep("")
@@ -146,7 +146,7 @@ export default function AnalyzeForm({
     <>
       {file.isSplitted ? (
         <div className="flex justify-end">
-          <Badge variant="outline">This file has been split up</Badge>
+          <Badge variant="outline">Este arquivo já foi dividido</Badge>
         </div>
       ) : (
         <Button className="w-full mb-6 py-6 text-lg" onClick={startAnalyze} disabled={isAnalyzing} data-analyze-button>
@@ -158,7 +158,7 @@ export default function AnalyzeForm({
           ) : (
             <>
               <Brain className="mr-1 h-4 w-4" />
-              <span>Analyze with AI</span>
+              <span>Analisar com IA</span>
             </>
           )}
         </Button>
@@ -261,7 +261,7 @@ export default function AnalyzeForm({
             name="categoryCode"
             value={formData.categoryCode}
             onValueChange={(value) => setFormData((prev) => ({ ...prev, categoryCode: value }))}
-            placeholder="Select Category"
+            placeholder="Selecionar Categoria"
             hideIfEmpty={!fieldMap.categoryCode.isVisibleInAnalysis}
             required={fieldMap.categoryCode.isRequired}
           />
@@ -273,7 +273,7 @@ export default function AnalyzeForm({
               name="projectCode"
               value={formData.projectCode}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, projectCode: value }))}
-              placeholder="Select Project"
+              placeholder="Selecionar Projeto"
               hideIfEmpty={!fieldMap.projectCode.isVisibleInAnalysis}
               required={fieldMap.projectCode.isRequired}
             />
@@ -303,7 +303,7 @@ export default function AnalyzeForm({
         ))}
 
         {formData.items && formData.items.length > 0 && (
-          <ToolWindow title="Detected items">
+          <ToolWindow title="Itens detectados">
             <ItemsDetectTool file={file} data={formData} />
           </ToolWindow>
         )}
@@ -327,19 +327,19 @@ export default function AnalyzeForm({
             disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4" />
-            {isDeleting ? "⏳ Deleting..." : "Delete"}
+            {isDeleting ? "⏳ Excluindo..." : "Excluir"}
           </Button>
 
           <Button type="submit" disabled={isSaving} data-save-button>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                Salvando...
               </>
             ) : (
               <>
                 <ArrowDownToLine className="h-4 w-4" />
-                Save as Transaction
+                Salvar como Transação
               </>
             )}
           </Button>

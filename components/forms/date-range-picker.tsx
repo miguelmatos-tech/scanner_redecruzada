@@ -22,22 +22,22 @@ export function DateRangePicker({
   const predefinedRanges = [
     {
       code: "last-4-weeks",
-      label: "Last 4 weeks",
+      label: "Últimas 4 semanas",
       range: { from: subWeeks(new Date(), 4), to: new Date() },
     },
     {
       code: "last-12-months",
-      label: "Last 12 months",
+      label: "Últimos 12 meses",
       range: { from: subMonths(new Date(), 12), to: new Date() },
     },
     {
       code: "month-to-date",
-      label: "Month to date",
+      label: "Mês atual",
       range: { from: startOfMonth(new Date()), to: new Date() },
     },
     {
       code: "quarter-to-date",
-      label: "Quarter to date",
+      label: "Trimestre atual",
       range: { from: startOfQuarter(new Date()), to: new Date() },
     },
     {
@@ -58,7 +58,7 @@ export function DateRangePicker({
     },
     {
       code: "all-time",
-      label: "All time",
+      label: "Todo o período",
       range: { from: undefined, to: undefined },
     },
   ]
@@ -80,7 +80,7 @@ export function DateRangePicker({
           ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
           : format(dateRange.from, "LLL dd, y")
       }
-      return "Select dates"
+      return "Selecionar datas"
     }
     return predefinedRanges.find((range) => range.code === rangeName)?.label || "Select dates"
   }

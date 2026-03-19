@@ -1,23 +1,29 @@
 import config from "@/lib/config"
 import type { Metadata, Viewport } from "next"
+import { Outfit } from "next/font/google"
 import "./globals.css"
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | TaxHacker",
+    template: "%s | Rede Cruzada",
     default: config.app.title,
   },
   description: config.app.description,
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/logo/256.png",
+    shortcut: "/logo/256.png",
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
   metadataBase: new URL(config.app.baseURL),
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "pt_BR",
     url: config.app.baseURL,
     title: config.app.title,
     description: config.app.description,
@@ -35,7 +41,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#001A5E",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -44,8 +50,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-white antialiased">{children}</body>
+    <html lang="pt-BR">
+      <body className={`${outfit.className} min-h-screen bg-white antialiased`}>{children}</body>
     </html>
   )
 }

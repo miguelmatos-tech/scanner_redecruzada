@@ -4,7 +4,7 @@ import React from "react"
 import { Resend } from "resend"
 import config from "./config"
 
-export const resend = new Resend(config.email.apiKey)
+export const resend = new Resend(config.email.apiKey || "re_dummy_key_for_testing_purposes")
 
 export async function sendOTPCodeEmail({ email, otp }: { email: string; otp: string }) {
   const html = React.createElement(OTPEmail, { otp })
@@ -12,7 +12,7 @@ export async function sendOTPCodeEmail({ email, otp }: { email: string; otp: str
   return await resend.emails.send({
     from: config.email.from,
     to: email,
-    subject: "Your TaxHacker verification code",
+    subject: "Seu código de verificação - Rede Cruzada",
     react: html,
   })
 }
@@ -23,7 +23,7 @@ export async function sendNewsletterWelcomeEmail(email: string) {
   return await resend.emails.send({
     from: config.email.from,
     to: email,
-    subject: "Welcome to TaxHacker Newsletter!",
+    subject: "Bem-vindo à Rede Cruzada!",
     react: html,
   })
 }

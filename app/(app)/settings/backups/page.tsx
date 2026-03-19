@@ -28,7 +28,7 @@ export default function BackupSettingsPage() {
     try {
       const progressId = await startProgress("backup")
       const downloadUrl = `/settings/backups/data?progressId=${progressId || ""}`
-      await download(downloadUrl, "taxhacker-backup.zip")
+      await download(downloadUrl, "redecruzada-backup.zip")
     } catch (error) {
       console.error("Failed to start backup:", error)
     }
@@ -37,35 +37,35 @@ export default function BackupSettingsPage() {
   return (
     <div className="container flex flex-col gap-4">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Download backup</h1>
+        <h1 className="text-2xl font-bold">Baixar backup</h1>
         <div className="flex flex-row gap-4">
           <Button onClick={handleDownload} disabled={isLoading || isDownloading}>
             {isLoading ? (
               progress?.current ? (
-                `Archiving ${progress.current}/${progress.total} files`
+                `Arquivando ${progress.current}/${progress.total} arquivos`
               ) : (
-                "Preparing backup. Don't close the page..."
+                "Preparando backup. Não feche a página..."
               )
             ) : isDownloading ? (
-              "Archive is created. Downloading..."
+              "Arquivo criado. Baixando..."
             ) : (
               <>
-                <Download className="mr-2" /> Download Data Archive
+                <Download className="mr-2" /> Baixar Arquivo de Dados
               </>
             )}
           </Button>
         </div>
         <div className="text-sm text-muted-foreground max-w-xl">
-          Inside the archive you will find all the uploaded files, as well as JSON files for transactions, categories,
-          projects, fields, currencies, and settings. You can view, edit or migrate your data to another service.
+          Dentro do arquivo você encontrará todos os uploads, além de arquivos JSON para transações, categorias,
+          projetos, campos, moedas e configurações. Você pode visualizar, editar ou migrar seus dados para outro serviço.
         </div>
       </div>
 
       <Card className="flex flex-col gap-2 mt-16 p-5 bg-red-100 max-w-xl">
-        <h2 className="text-xl font-semibold">Restore from a backup</h2>
+        <h2 className="text-xl font-semibold">Restaurar de um backup</h2>
         <p className="text-sm text-muted-foreground">
-          ⚠️ This action is irreversible. Restoring from a backup will delete all existing data from your current
-          database and remove all uploaded files. Be careful and make a backup first!
+          ⚠️ Esta ação é irreversível. Restaurar um backup excluirá todos os dados existentes do seu banco de dados
+          atual e removerá todos os arquivos enviados. Tenha cuidado e faça um backup primeiro!
         </p>
         <form action={restoreBackup}>
           <div className="flex flex-col gap-4 pt-4">
@@ -74,15 +74,15 @@ export default function BackupSettingsPage() {
             </label>
             <label className="flex flex-row gap-2 items-center">
               <input type="checkbox" name="removeExistingData" required />
-              <span className="text-red-500">I undestand that it will permanently delete all existing data</span>
+              <span className="text-red-500">Eu entendo que isso excluirá permanentemente todos os dados existentes</span>
             </label>
             <Button type="submit" variant="destructive" disabled={restorePending}>
               {restorePending ? (
                 <>
-                  <Loader2 className="animate-spin" /> Restoring from backup... (it can take a while)
+                  <Loader2 className="animate-spin" /> Restaurando do backup... (pode demorar)
                 </>
               ) : (
-                "Restore from backup"
+                "Restaurar do backup"
               )}
             </Button>
           </div>
@@ -92,12 +92,12 @@ export default function BackupSettingsPage() {
 
       {restoreState?.success && (
         <Card className="flex flex-col gap-2 p-5 bg-green-100 max-w-xl">
-          <h2 className="text-xl font-semibold">Backup restored successfully</h2>
-          <p className="text-sm text-muted-foreground">You can now continue using the app. Import stats:</p>
+          <h2 className="text-xl font-semibold">Backup restaurado com sucesso</h2>
+          <p className="text-sm text-muted-foreground">Você já pode continuar usando o aplicativo. Estatísticas da importação:</p>
           <ul className="list-disc list-inside">
             {Object.entries(restoreState.data?.counters || {}).map(([key, value]) => (
               <li key={key}>
-                <span className="font-bold">{key}</span>: {value} items
+                <span className="font-bold">{key}</span>: {value} itens
               </li>
             ))}
           </ul>

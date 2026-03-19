@@ -3,49 +3,49 @@ import { Separator } from "@/components/ui/separator"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Settings",
-  description: "Customize your settings here",
+  title: "Configurações",
+  description: "Personalize suas configurações aqui",
 }
 
 const settingsCategories = [
   {
-    title: "General",
+    title: "Geral",
     href: "/settings",
   },
   {
-    title: "Profile & Plan",
+    title: "Perfil e Plano",
     href: "/settings/profile",
   },
   {
-    title: "Business Details",
+    title: "Dados da Organização",
     href: "/settings/business",
   },
   {
-    title: "LLM settings",
+    title: "Configurações de IA",
     href: "/settings/llm",
   },
   {
-    title: "Fields",
+    title: "Campos",
     href: "/settings/fields",
   },
   {
-    title: "Categories",
+    title: "Categorias",
     href: "/settings/categories",
   },
   {
-    title: "Projects",
+    title: "Projetos",
     href: "/settings/projects",
   },
   {
-    title: "Currencies",
+    title: "Moedas",
     href: "/settings/currencies",
   },
   {
-    title: "Backups",
+    title: "Cópias de Segurança",
     href: "/settings/backups",
   },
   {
-    title: "Danger Zone",
+    title: "Zona de Perigo",
     href: "/settings/danger",
   },
 ]
@@ -55,8 +55,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     <>
       <div className="space-y-6 p-10 pb-16">
         <div className="space-y-0.5">
-          <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
-          <p className="text-muted-foreground">Customize your settings here</p>
+          <h2 className="text-2xl font-bold tracking-tight">Configurações</h2>
+          <p className="text-muted-foreground">Personalize suas configurações aqui</p>
         </div>
         <Separator className="my-6" />
         <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">

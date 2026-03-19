@@ -3,11 +3,13 @@ import { getSessionCookie } from "better-auth/cookies"
 import { NextRequest, NextResponse } from "next/server"
 
 export default async function middleware(request: NextRequest) {
+  // 🛡️ SECURITY WARNING: SELF_HOSTED_MODE bypasses auth. 
+  // ONLY use this on Localhost or behind a secure VPN (like Cloudflare Zero Trust / Tailscale).
   if (globalConfig.selfHosted.isEnabled) {
     return NextResponse.next()
   }
 
-  const sessionCookie = getSessionCookie(request, { cookiePrefix: "taxhacker" })
+  const sessionCookie = getSessionCookie(request, { cookiePrefix: "redecruzada" })
   if (!sessionCookie) {
     return NextResponse.redirect(new URL(globalConfig.auth.loginUrl, request.url))
   }

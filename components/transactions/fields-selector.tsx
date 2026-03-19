@@ -41,12 +41,12 @@ export function ColumnSelector({ fields, onChange }: { fields: Field[]; onChange
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" title="Select table columns">
+        <Button variant="outline" size="icon" title="Selecionar colunas">
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ColumnsIcon className="h-4 w-4" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Show Columns</DropdownMenuLabel>
+        <DropdownMenuLabel>Mostrar Colunas</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {fields.map((field) => (
           <DropdownMenuCheckboxItem

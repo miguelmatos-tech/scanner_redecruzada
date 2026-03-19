@@ -62,13 +62,22 @@ async function requestLLMUnified(config: LLMConfig, req: LLMRequest): Promise<LL
 
     let message_content: any = [{ type: "text", text: req.prompt }]
     if (req.attachments && req.attachments.length > 0) {
-      const images = req.attachments.map((att) => ({
-        type: "image_url",
-        image_url: {
-          url: `data:${att.contentType};base64,${att.base64}`,
-        },
-      }))
-      message_content.push(...images)
+      const attachments = req.attachments.map((att) => {
+        if (att.contentType === "application/pdf" && config.provider === "google") {
+          return {
+            type: "media",
+            mimeType: att.contentType,
+            data: att.base64,
+          }
+        }
+        return {
+          type: "image_url",
+          image_url: {
+            url: `data:${att.contentType};base64,${att.base64}`,
+          },
+        }
+      })
+      message_content.push(...attachments)
     }
     const messages: BaseMessage[] = [new HumanMessage({ content: message_content })]
 

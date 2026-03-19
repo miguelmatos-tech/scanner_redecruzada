@@ -18,31 +18,31 @@ export function SubscriptionPlan({ user }: { user: User }) {
     <div className="flex flex-wrap gap-5">
       <div className="flex flex-col gap-2 flex-1 items-center justify-center max-w-[300px]">
         <PricingCard plan={plan} hideButton={true} />
-        <Badge variant="outline">Current Plan</Badge>
+        <Badge variant="outline">Plano Atual</Badge>
       </div>
       <div className="flex-1">
         <Card className="w-full p-4">
           <div className="space-y-2">
-            <strong className="text-lg">Usage:</strong>
+            <strong className="text-lg">Uso:</strong>
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4" />
               <span>
-                <strong className="font-semibold">Storage:</strong> {formatBytes(user.storageUsed)} /{" "}
-                {user.storageLimit > 0 ? formatBytes(user.storageLimit) : "Unlimited"}
+                <strong className="font-semibold">Espaço:</strong> {formatBytes(user.storageUsed)} /{" "}
+                {user.storageLimit > 0 ? formatBytes(user.storageLimit) : "Ilimitado"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <BrainCog className="h-4 w-4" />
               <span>
-                <strong className="font-semibold">AI Analyses:</strong> {formatNumber(plan.limits.ai - user.aiBalance)}{" "}
-                / {plan.limits.ai > 0 ? formatNumber(plan.limits.ai) : "Unlimited"}
+                <strong className="font-semibold">Análises de IA:</strong> {formatNumber(plan.limits.ai - user.aiBalance)}{" "}
+                / {plan.limits.ai > 0 ? formatNumber(plan.limits.ai) : "Ilimitado"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <CalendarSync className="h-4 w-4" />
               <span>
-                <strong className="font-semibold">Expiration Date:</strong>{" "}
-                {user.membershipExpiresAt ? formatDate(user.membershipExpiresAt, "yyyy-MM-dd") : "Never"}
+                <strong className="font-semibold">Expira em:</strong>{" "}
+                {user.membershipExpiresAt ? formatDate(user.membershipExpiresAt, "yyyy-MM-dd") : "Nunca"}
               </span>
             </div>
           </div>
@@ -50,18 +50,18 @@ export function SubscriptionPlan({ user }: { user: User }) {
           <div className="space-y-4 mt-6 text-center">
             {user.stripeCustomerId && (
               <Button asChild className="w-full">
-                <Link href="/api/stripe/portal">Manage Subscription</Link>
+                <Link href="/api/stripe/portal">Gerenciar Assinatura</Link>
               </Button>
             )}
 
             {!user.stripeCustomerId && user.membershipExpiresAt && (
               <Button asChild className="w-full">
-                <Link href="/cloud">Buy Subscription</Link>
+                <Link href="/cloud">Comprar Assinatura</Link>
               </Button>
             )}
 
             <Link href={`mailto:${config.app.supportEmail}`} className="block text-sm text-muted-foreground">
-              Contact Us
+              Fale Conosco
             </Link>
           </div>
         </Card>

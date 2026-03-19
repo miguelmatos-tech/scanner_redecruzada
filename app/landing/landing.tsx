@@ -19,7 +19,7 @@ export default function LandingPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-indigo-600 rounded-full opacity-20 blur-md group-hover:opacity-40 transition-opacity duration-300" />
             </div>
-            <ColoredText className="text-2xl font-bold">TaxHacker</ColoredText>
+            <ColoredText className="text-2xl font-bold">Rede Cruzada</ColoredText>
           </Link>
           <Link
             href="/enter"

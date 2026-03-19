@@ -48,7 +48,11 @@ export async function pdfToImages(user: User, origFilePath: string): Promise<{ c
       pages: paths,
     }
   } catch (error) {
-    console.error("Error converting PDF to image:", error)
-    throw error
+    console.error("Error converting PDF to image (Ghostscript/GraphicsMagick may be missing):", error)
+    // Fallback: return the original file as a single "page" - this will allow some LLMs to process it as a document
+    return {
+      contentType: "application/pdf",
+      pages: [origFilePath],
+    }
   }
 }

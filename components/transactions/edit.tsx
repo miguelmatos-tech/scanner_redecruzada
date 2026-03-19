@@ -71,7 +71,7 @@ export default function TransactionEditForm({
   }, [fields])
 
   const handleDelete = async () => {
-    if (confirm("Are you sure? This will delete the transaction with all the files permanently")) {
+    if (confirm("Tem certeza? Esta ação excluirá a transação e todos os arquivos permanentemente")) {
       startTransition(async () => {
         await deleteAction(transaction.id)
         router.back()
@@ -152,7 +152,7 @@ export default function TransactionEditForm({
           <>
             {formData.convertedTotal !== null && (
               <FormInput
-                title={`Total converted to ${formData.convertedCurrencyCode || "UNKNOWN CURRENCY"}`}
+                title={`Total convertido para ${formData.convertedCurrencyCode || "MOEDA DESCONHECIDA"}`}
                 type="number"
                 step="0.01"
                 name="convertedTotal"
@@ -163,7 +163,7 @@ export default function TransactionEditForm({
             )}
             {(!formData.convertedCurrencyCode || formData.convertedCurrencyCode !== settings.default_currency) && (
               <FormSelectCurrency
-                title="Convert to"
+                title="Converter para"
                 name="convertedCurrencyCode"
                 defaultValue={formData.convertedCurrencyCode || settings.default_currency}
                 currencies={currencies}
@@ -217,7 +217,7 @@ export default function TransactionEditForm({
       </div>
 
       {formData.items && Array.isArray(formData.items) && formData.items.length > 0 && (
-        <ToolWindow title="Detected items">
+        <ToolWindow title="Itens detectados">
           <ItemsDetectTool data={formData as TransactionData} />
         </ToolWindow>
       )}
@@ -226,7 +226,7 @@ export default function TransactionEditForm({
         <Button type="button" onClick={handleDelete} variant="destructive" disabled={isDeleting}>
           <>
             <Trash2 className="h-4 w-4" />
-            {isDeleting ? "⏳ Deleting..." : "Delete "}
+            {isDeleting ? "⏳ Excluindo..." : "Excluir "}
           </>
         </Button>
 
@@ -234,12 +234,12 @@ export default function TransactionEditForm({
           {isSaving ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
+              Salvando...
             </>
           ) : (
             <>
               <Save className="h-4 w-4" />
-              Save Transaction
+              Salvar Transação
             </>
           )}
         </Button>

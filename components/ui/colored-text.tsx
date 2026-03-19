@@ -5,7 +5,7 @@ export function ColoredText({
   className,
 }: { children: React.ReactNode } & React.HTMLAttributes<HTMLSpanElement>) {
   return (
-    <span className={cn("bg-gradient-to-r from-pink-600 to-indigo-600 bg-clip-text text-transparent", className)}>
+    <span className={cn("text-[#F9930C] font-bold opacity-100", className)}>
       {children}
     </span>
   )
