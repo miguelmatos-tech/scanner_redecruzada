@@ -20,6 +20,9 @@ const envSchema = z.object({
   RESEND_AUDIENCE_ID: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().default(""),
   STRIPE_WEBHOOK_SECRET: z.string().default(""),
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_BUCKET_NAME: z.string().default("uploads"),
 })
 
 const env = envSchema.parse(process.env)
@@ -75,6 +78,11 @@ const config = {
     apiKey: env.RESEND_API_KEY,
     from: env.RESEND_FROM_EMAIL,
     audienceId: env.RESEND_AUDIENCE_ID,
+  },
+  supabase: {
+    url: env.SUPABASE_URL,
+    serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY,
+    bucketName: env.SUPABASE_BUCKET_NAME,
   },
 } as const
 
