@@ -3,7 +3,10 @@ import { access, constants, readdir, stat } from "fs/promises"
 import path from "path"
 import config from "./config"
 
-export const FILE_UPLOAD_PATH = path.resolve(process.env.UPLOAD_PATH || "./uploads")
+// If running on Vercel or similar serverless, default to /tmp to avoid read-only FS errors
+export const FILE_UPLOAD_PATH = path.resolve(
+  process.env.UPLOAD_PATH || (process.env.VERCEL ? "/tmp/uploads" : "./uploads")
+)
 export const FILE_UNSORTED_DIRECTORY_NAME = "unsorted"
 export const FILE_PREVIEWS_DIRECTORY_NAME = "previews"
 export const FILE_STATIC_DIRECTORY_NAME = "static"

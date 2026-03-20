@@ -50,7 +50,13 @@ const settingsCategories = [
   },
 ]
 
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+import { getCurrentUser } from "@/lib/auth"
+import { redirect } from "next/navigation"
+
+export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser()
+  if (user.role === "USER") redirect("/unsorted")
+
   return (
     <>
       <div className="space-y-6 p-10 pb-16">

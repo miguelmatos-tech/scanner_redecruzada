@@ -8,6 +8,7 @@ export const SELF_HOSTED_USER = {
   email: "redecruzada@localhost",
   name: "Rede Cruzada (Local)",
   membershipPlan: "unlimited",
+  role: "ADMIN_GERAL",
 }
 
 export const getSelfHostedUser = cache(async () => {

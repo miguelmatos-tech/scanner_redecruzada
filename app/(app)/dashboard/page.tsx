@@ -9,6 +9,7 @@ import { getUnsortedFiles } from "@/models/files"
 import { getSettings } from "@/models/settings"
 import { TransactionFilters } from "@/models/transactions"
 import { Metadata } from "next"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Painel",
@@ -18,6 +19,11 @@ export const metadata: Metadata = {
 export default async function Dashboard({ searchParams }: { searchParams: Promise<TransactionFilters> }) {
   const filters = await searchParams
   const user = await getCurrentUser()
+
+  if (user.role === "USER") {
+    redirect("/unsorted")
+  }
+
   const unsortedFiles = await getUnsortedFiles(user.id)
   const settings = await getSettings(user.id)
 

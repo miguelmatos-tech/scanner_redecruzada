@@ -49,7 +49,15 @@ export const getTransactions = cache(
     transactions: Transaction[]
     total: number
   }> => {
-    const where: Prisma.TransactionWhereInput = { userId }
+    const userObj = await prisma.user.findUnique({ where: { id: userId } })
+    const where: Prisma.TransactionWhereInput = {}
+    if (userObj?.role !== "ADMIN_GERAL") {
+      if (userObj?.role === "ADMIN_UNIDADE" && userObj.unitId) {
+        where.user = { unitId: userObj.unitId }
+      } else {
+        where.userId = userId
+      }
+    }
     let orderBy: Prisma.TransactionOrderByWithRelationInput = { issuedAt: "desc" }
 
     if (filters) {

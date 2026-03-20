@@ -24,6 +24,9 @@ const TRANSACTIONS_PER_PAGE = 500
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<TransactionFilters> }) {
   const { page, ...filters } = await searchParams
   const user = await getCurrentUser()
+
+  if (user.role === "USER") redirect("/unsorted")
+
   const { transactions, total } = await getTransactions(user.id, filters, {
     limit: TRANSACTIONS_PER_PAGE,
     offset: ((page ?? 1) - 1) * TRANSACTIONS_PER_PAGE,

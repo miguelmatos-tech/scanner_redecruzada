@@ -69,27 +69,31 @@ export function AppSidebar({
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItemWithHighlight href="/dashboard">
-                  <SidebarMenuButton asChild>
-                    <Link href="/dashboard">
-                      <House />
-                      <span>Início</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItemWithHighlight>
+                {profile.role !== "USER" && (
+                  <SidebarMenuItemWithHighlight href="/dashboard">
+                    <SidebarMenuButton asChild>
+                      <Link href="/dashboard">
+                        <House />
+                        <span>Início</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItemWithHighlight>
+                )}
 
-                <SidebarMenuItemWithHighlight href="/transactions">
-                  <SidebarMenuButton asChild>
-                    <Link href="/transactions">
-                      <FileText />
-                      <span>Transações</span>
-                      {notification && notification.code === "sidebar.transactions" && notification.message && (
-                        <Blinker />
-                      )}
-                      <span></span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItemWithHighlight>
+                {profile.role !== "USER" && (
+                  <SidebarMenuItemWithHighlight href="/transactions">
+                    <SidebarMenuButton asChild>
+                      <Link href="/transactions">
+                        <FileText />
+                        <span>Transações</span>
+                        {notification && notification.code === "sidebar.transactions" && notification.message && (
+                          <Blinker />
+                        )}
+                        <span></span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItemWithHighlight>
+                )}
 
                 <SidebarMenuItemWithHighlight href="/unsorted">
                   <SidebarMenuButton asChild>
@@ -106,22 +110,26 @@ export function AppSidebar({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItemWithHighlight>
-                <SidebarMenuItemWithHighlight href="/apps">
-                  <SidebarMenuButton asChild>
-                    <Link href="/apps">
-                      <LayoutDashboard />
-                      <span>Aplicativos</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItemWithHighlight>
-                <SidebarMenuItemWithHighlight href="/settings">
-                  <SidebarMenuButton asChild>
-                    <Link href="/settings">
-                      <Settings />
-                      <span>Configurações</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItemWithHighlight>
+                {profile.role !== "USER" && (
+                  <>
+                    <SidebarMenuItemWithHighlight href="/apps">
+                      <SidebarMenuButton asChild>
+                        <Link href="/apps">
+                          <LayoutDashboard />
+                          <span>Aplicativos</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItemWithHighlight>
+                    <SidebarMenuItemWithHighlight href="/settings">
+                      <SidebarMenuButton asChild>
+                        <Link href="/settings">
+                          <Settings />
+                          <span>Configurações</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItemWithHighlight>
+                  </>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -131,14 +139,16 @@ export function AppSidebar({
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/import/csv">
-                      <Import />
-                      Importar CSV
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {profile.role !== "USER" && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="/import/csv">
+                        <Import />
+                        Importar CSV
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
 
                 {!open && (
                   <SidebarMenuItem>

@@ -20,6 +20,8 @@ export type UserProfile = {
   storageUsed: number
   storageLimit: number
   aiBalance: number
+  role: string
+  unitId: string | null
 }
 
 export const auth = betterAuth({
@@ -110,4 +112,14 @@ export function isAiBalanceExhausted(user: User) {
     return false
   }
   return user.aiBalance <= 0
+}
+
+export function isAdmin(user: User) {
+  return user.role === "ADMIN_GERAL"
+}
+
+export function isUnitAdmin(user: User, unitId?: string | null) {
+  if (isAdmin(user)) return true
+  if (user.role === "ADMIN_UNIDADE" && user.unitId && user.unitId === unitId) return true
+  return false
 }

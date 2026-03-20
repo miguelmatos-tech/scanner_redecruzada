@@ -42,6 +42,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     storageUsed: user.storageUsed || 0,
     storageLimit: user.storageLimit || -1,
     aiBalance: user.aiBalance || 0,
+    role: user.role,
+    unitId: user.unitId,
   }
 
   return (
