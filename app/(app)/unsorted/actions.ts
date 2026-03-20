@@ -71,7 +71,8 @@ export async function analyzeFileAction(
     settings.prompt_analyse_new_file || DEFAULT_PROMPT_ANALYSE_NEW_FILE,
     fields,
     categories,
-    projects
+    projects,
+    file.filename
   )
 
   const schema = fieldsToJsonSchema(fields)

@@ -4,9 +4,14 @@ export function buildLLMPrompt(
   promptTemplate: string,
   fields: Field[],
   categories: Category[] = [],
-  projects: Project[] = []
+  projects: Project[] = [],
+  filename?: string
 ) {
   let prompt = promptTemplate
+
+  if (filename) {
+    prompt = prompt.replace("{filename}", filename)
+  }
 
   prompt = prompt.replace(
     "{fields}",

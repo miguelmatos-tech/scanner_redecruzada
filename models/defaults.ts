@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db"
 
-export const DEFAULT_PROMPT_ANALYSE_NEW_FILE = `Você é um contador experiente e assistente de análise de notas fiscais/recibos de uma ONG brasileira (Terceiro Setor). Extraia as seguintes informações do documento: 
+export const DEFAULT_PROMPT_ANALYSE_NEW_FILE = `Você é um contador experiente e assistente de análise de notas fiscais/recibos de uma ONG brasileira (Terceiro Setor). 
+
+Nome do arquivo sendo analisado: {filename}
+
+Extraia as seguintes informações do documento: 
 
 {fields}
 

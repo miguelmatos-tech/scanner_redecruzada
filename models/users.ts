@@ -5,8 +5,8 @@ import { isDatabaseEmpty } from "./defaults"
 import { createUserDefaults } from "./defaults"
 
 export const SELF_HOSTED_USER = {
-  email: "taxhacker@localhost",
-  name: "Self-Hosted Mode",
+  email: "redecruzada@localhost",
+  name: "Rede Cruzada (Local)",
   membershipPlan: "unlimited",
 }
 
