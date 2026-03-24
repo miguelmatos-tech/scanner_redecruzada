@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db"
-import { Prisma } from "@/prisma/client"
+import { Prisma, Role } from "@/prisma/client"
 import { cache } from "react"
 import { isDatabaseEmpty } from "./defaults"
 import { createUserDefaults } from "./defaults"
@@ -8,7 +8,7 @@ export const SELF_HOSTED_USER = {
   email: "redecruzada@localhost",
   name: "Rede Cruzada (Local)",
   membershipPlan: "unlimited",
-  role: "ADMIN_GERAL",
+  role: "ADMIN_GERAL" as Role,
 }
 
 export const getSelfHostedUser = cache(async () => {

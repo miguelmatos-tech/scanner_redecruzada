@@ -7,7 +7,7 @@ import { AnalyzeAttachment } from "./attachments"
 import { requestLLM } from "./providers/llmProvider"
 
 export type AnalysisResult = {
-  output: Record<string, string>
+  output: Record<string, any>
   tokensUsed: number
 }
 

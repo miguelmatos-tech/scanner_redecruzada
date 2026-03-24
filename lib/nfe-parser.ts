@@ -13,7 +13,7 @@ export function parseNfeXml(xmlString: string): AnalysisResult | null {
   };
 
   // Find the exact "emit" (emissor) node to grab the right CNPJ and Nome
-  const emitMatch = xmlString.match(/<emit>(.*?)<\/emit>/s);
+  const emitMatch = xmlString.match(/<emit>([\s\S]*?)<\/emit>/);
   const emitXml = emitMatch ? emitMatch[1] : '';
 
   const emitNome = extract('xNome', emitXml);
@@ -25,7 +25,7 @@ export function parseNfeXml(xmlString: string): AnalysisResult | null {
   const infAdic = extract('infCpl');
   
   const items: any[] = [];
-  const detRegex = /<det nItem=".*?"[^>]*>(.*?)<\/det>/gs;
+  const detRegex = /<det nItem=".*?"[^>]*>([\s\S]*?)<\/det>/g;
   let detMatch;
   while ((detMatch = detRegex.exec(xmlString)) !== null) {
     const detXml = detMatch[1];
