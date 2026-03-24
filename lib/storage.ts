@@ -1,12 +1,13 @@
 import { createClient } from "@supabase/supabase-js"
 import { access, constants, mkdir, readFile, unlink, writeFile } from "fs/promises"
 import path from "path"
+import config from "./config"
 
-const supabaseUrl = process.env.SUPABASE_URL || ""
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+const supabaseUrl = config.supabase.url || process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseKey = config.supabase.serviceRoleKey || ""
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || "uploads"
+const BUCKET_NAME = config.supabase.bucketName || "uploads"
 
 /**
  * Ensures a directory exists (used for local fallback).
@@ -25,7 +26,9 @@ async function ensureDir(filePath: string) {
  */
 export async function saveFile(filePath: string, fileContent: Buffer | string | Uint8Array) {
   if (supabase) {
-    const { error } = await supabase.storage.from(BUCKET_NAME).upload(filePath, fileContent, {
+    // Standardize path for Supabase (remove leading slashes if any)
+    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
+    const { error } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, fileContent, {
       upsert: true,
     })
     if (error) {
@@ -43,16 +46,46 @@ export async function saveFile(filePath: string, fileContent: Buffer | string | 
  * Reads a file. Uses Supabase if configured, otherwise falls back to local fs.
  */
 export async function getFileBuffer(filePath: string): Promise<Buffer> {
+  // 🛡️ HYBRID STORAGE PATCH: Check local disk first (useful for /tmp previews on Vercel)
+  try {
+    await access(filePath, constants.F_OK)
+    const localBuffer = await readFile(filePath)
+    return localBuffer
+  } catch {
+    // Fall through to Supabase if not found locally or if it's a relative storage path
+  }
+
   if (supabase) {
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).download(filePath)
+    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).download(storagePath)
     if (error || !data) {
-      throw new Error(`Failed to download file from Supabase: ${filePath}`)
+      throw new Error(`Failed to download file from Supabase: ${storagePath}`)
     }
     const arrayBuffer = await data.arrayBuffer()
     return Buffer.from(arrayBuffer)
   } else {
-    // Local fallback
+    // Local fallback (already tried above, but for clarity)
     return await readFile(filePath)
+  }
+}
+
+/**
+ * Moves or renames a file.
+ */
+export async function moveFile(oldPath: string, newPath: string) {
+  if (supabase) {
+    const oldStoragePath = oldPath.startsWith("/") ? oldPath.slice(1) : oldPath
+    const newStoragePath = newPath.startsWith("/") ? newPath.slice(1) : newPath
+    const { error } = await supabase.storage.from(BUCKET_NAME).move(oldStoragePath, newStoragePath)
+    if (error) {
+      console.error("Supabase Move Error:", error)
+      throw new Error(`Failed to move file in Supabase: ${oldStoragePath} -> ${newStoragePath}`)
+    }
+  } else {
+    const { copyFile, unlink } = await import("fs/promises")
+    await ensureDir(newPath)
+    await copyFile(oldPath, newPath)
+    await unlink(oldPath)
   }
 }
 
@@ -61,7 +94,8 @@ export async function getFileBuffer(filePath: string): Promise<Buffer> {
  */
 export async function removeFile(filePath: string) {
   if (supabase) {
-    const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath])
+    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
+    const { error } = await supabase.storage.from(BUCKET_NAME).remove([storagePath])
     if (error) {
       console.error("Supabase Remove Error:", error)
     }
@@ -75,12 +109,31 @@ export async function removeFile(filePath: string) {
 }
 
 /**
+ * Downloads a remote file to a local path (e.g. /tmp) for local processing.
+ */
+export async function downloadToTmp(storagePath: string, localPath: string) {
+  if (supabase) {
+    const buffer = await getFileBuffer(storagePath)
+    await ensureDir(localPath)
+    await writeFile(localPath, buffer)
+  } else {
+    // If already local, just ensure it exists at storagePath (which is the same as localPath usually)
+    if (storagePath !== localPath) {
+      const { copyFile } = await import("fs/promises")
+      await ensureDir(localPath)
+      await copyFile(storagePath, localPath)
+    }
+  }
+}
+
+/**
  * Gets a public or signed URL for a file.
  * Useful for images/previews sent to the frontend.
  */
 export async function getFileUrl(filePath: string, expiresIn: number = 3600): Promise<string> {
   if (supabase) {
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(filePath, expiresIn)
+    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(storagePath, expiresIn)
     if (error || !data) {
       throw new Error("Failed to generate signed url")
     }
@@ -95,22 +148,24 @@ export async function getFileUrl(filePath: string, expiresIn: number = 3600): Pr
  * Checks if a file exists.
  */
 export async function checkFileExists(filePath: string): Promise<boolean> {
+  // Check local disk first
+  try {
+    await access(filePath, constants.F_OK)
+    return true
+  } catch {
+    // Not found locally
+  }
+
   if (supabase) {
-    // A trick to see if a file exists without downloading it is to create a signed URL and see if it fails,
-    // but a better way is to list files in that path.
-    const dir = path.dirname(filePath)
-    const fileName = path.basename(filePath)
+    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
+    const dir = path.dirname(storagePath)
+    const fileName = path.basename(storagePath)
     const { data, error } = await supabase.storage.from(BUCKET_NAME).list(dir === "." ? "" : dir, {
       search: fileName,
     })
     if (error || !data) return false
     return data.some((f) => f.name === fileName)
-  } else {
-    try {
-      await access(filePath, constants.F_OK)
-      return true
-    } catch {
-      return false
-    }
   }
+
+  return false
 }

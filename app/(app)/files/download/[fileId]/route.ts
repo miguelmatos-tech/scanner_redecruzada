@@ -1,9 +1,9 @@
 import { getCurrentUser } from "@/lib/auth"
-import { fileExists, fullPathForFile } from "@/lib/files"
+import { fullPathForFile } from "@/lib/files"
 import { encodeFilename } from "@/lib/utils"
 import { getFileById } from "@/models/files"
-import fs from "fs/promises"
 import { NextResponse } from "next/server"
+import { checkFileExists, getFileBuffer } from "@/lib/storage"
 
 export async function GET(request: Request, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params
@@ -21,22 +21,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
       return new NextResponse("File not found or does not belong to the user", { status: 404 })
     }
 
-    // Check if file exists
     const fullFilePath = fullPathForFile(user, file)
-    const isFileExists = await fileExists(fullFilePath)
+    const isFileExists = await checkFileExists(fullFilePath)
     if (!isFileExists) {
-      return new NextResponse(`File not found on disk: ${file.path}`, { status: 404 })
+      return new NextResponse(`File requested was not found in storage: ${file.path}`, { status: 404 })
     }
 
     // Read file
-    const fileBuffer = await fs.readFile(fullFilePath)
+    const fileBuffer = await getFileBuffer(fullFilePath)
 
     // Return file with proper content type and encoded filename
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": file.mimetype,
-          "Content-Disposition": `attachment; filename*=${encodeFilename(file.filename)}`,
-        },
+        "Content-Disposition": `attachment; filename*=${encodeFilename(file.filename)}`,
+      },
     })
   } catch (error) {
     console.error("Error serving file:", error)

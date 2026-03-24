@@ -3,6 +3,7 @@
 import { ActionState } from "@/lib/actions"
 import { getCurrentUser, isSubscriptionExpired } from "@/lib/auth"
 import {
+  fullPathForFile,
   getDirectorySize,
   getUserUploadsDirectory,
   isEnoughStorageToUploadFile,
@@ -12,10 +13,9 @@ import {
 import { createFile } from "@/models/files"
 import { updateUser } from "@/models/users"
 import { randomUUID } from "crypto"
-import { mkdir, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
-import path from "path"
 import { fileUploadRateLimiter } from "@/lib/rate-limit"
+import { saveFile } from "@/lib/storage"
 
 export async function uploadFilesAction(formData: FormData): Promise<ActionState<null>> {
   const user = await getCurrentUser()
@@ -60,10 +60,8 @@ export async function uploadFilesAction(formData: FormData): Promise<ActionState
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      const fullFilePath = safePathJoin(userUploadsDirectory, relativeFilePath)
-      await mkdir(path.dirname(fullFilePath), { recursive: true })
-
-      await writeFile(fullFilePath, buffer)
+      const fullFilePath = fullPathForFile(user, { path: relativeFilePath } as any)
+      await saveFile(fullFilePath, buffer)
 
       // Create file record in database
       const fileRecord = await createFile(user.id, {
@@ -81,8 +79,13 @@ export async function uploadFilesAction(formData: FormData): Promise<ActionState
     })
   )
 
-  const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
-  await updateUser(user.id, { storageUsed })
+  // Update storage used (we can optimize this later with a dedicated storage tool)
+  try {
+    const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
+    await updateUser(user.id, { storageUsed })
+  } catch (e) {
+    console.error("Failed to update storage size:", e)
+  }
 
   console.log("uploadedFiles", uploadedFiles)
 

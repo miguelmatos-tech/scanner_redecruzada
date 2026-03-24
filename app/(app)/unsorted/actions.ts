@@ -8,6 +8,7 @@ import { transactionFormSchema } from "@/forms/transactions"
 import { ActionState } from "@/lib/actions"
 import { getCurrentUser, isAiBalanceExhausted, isSubscriptionExpired } from "@/lib/auth"
 import {
+  fullPathForFile,
   getDirectorySize,
   getTransactionFileUploadPath,
   getUserUploadsDirectory,
@@ -20,12 +21,12 @@ import { createTransaction, TransactionData, updateTransactionFiles } from "@/mo
 import { updateUser } from "@/models/users"
 import { Category, Field, File, Project, Transaction } from "@/prisma/client"
 import { randomUUID } from "crypto"
-import { copyFile, mkdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
 import { aiRateLimiter } from "@/lib/rate-limit"
 import { isValidCNPJ } from "@/lib/cnpj-validator"
 import { parseNfeXml } from "@/lib/nfe-parser"
+import { getFileBuffer, moveFile, saveFile } from "@/lib/storage"
 
 export async function analyzeFileAction(
   file: File,
@@ -81,9 +82,8 @@ export async function analyzeFileAction(
   let results: ActionState<AnalysisResult>;
   
   if (file.mimetype.includes("xml")) {
-    const userUploadsDirectory = getUserUploadsDirectory(user)
-    const originalFilePath = safePathJoin(userUploadsDirectory, file.path)
-    const fileContent = await readFile(originalFilePath, 'utf8')
+    const fullFilePath = fullPathForFile(user, file)
+    const fileContent = (await getFileBuffer(fullFilePath)).toString("utf8")
     const parsedData = parseNfeXml(fileContent)
     
     if (parsedData) {
@@ -145,18 +145,10 @@ export async function saveFileAsTransactionAction(
     const newRelativeFilePath = getTransactionFileUploadPath(file.id, originalFileName, transaction)
 
     // Move file to new location and name
-    const oldFullFilePath = safePathJoin(userUploadsDirectory, file.path)
-    const newFullFilePath = safePathJoin(userUploadsDirectory, newRelativeFilePath)
-    await mkdir(path.dirname(newFullFilePath), { recursive: true })
-    // Use copy+delete instead of rename to avoid EBUSY on Windows
-    await copyFile(path.resolve(oldFullFilePath), path.resolve(newFullFilePath))
-    try {
-      await unlink(path.resolve(oldFullFilePath))
-    } catch (unlinkError: any) {
-      // Ignore EBUSY on delete - the copy succeeded, file will be cleaned up later
-      if (unlinkError.code !== 'EBUSY') throw unlinkError
-      console.warn('Could not delete original file (EBUSY), will be cleaned up later:', oldFullFilePath)
-    }
+    const oldFullFilePath = fullPathForFile(user, file)
+    const newFullFilePath = fullPathForFile(user, { ...file, path: newRelativeFilePath } as File)
+    
+    await moveFile(oldFullFilePath, newFullFilePath)
 
     // Update file record
     await updateFile(file.id, user.id, {
@@ -211,22 +203,18 @@ export async function splitFileIntoItemsAction(
     }
 
     // Get the original file's content
-    const userUploadsDirectory = getUserUploadsDirectory(user)
-    const originalFilePath = safePathJoin(userUploadsDirectory, originalFile.path)
-    const fileContent = await readFile(originalFilePath)
+    const originalFilePath = fullPathForFile(user, originalFile)
+    const fileContent = await getFileBuffer(originalFilePath)
 
     // Create a new file for each item
     for (const item of items) {
       const fileUuid = randomUUID()
       const fileName = `${originalFile.filename}-part-${item.name}`
       const relativeFilePath = unsortedFilePath(fileUuid, fileName)
-      const fullFilePath = safePathJoin(userUploadsDirectory, relativeFilePath)
+      const fullFilePath = fullPathForFile(user, { path: relativeFilePath } as File)
 
-      // Create directory if it doesn't exist
-      await mkdir(path.dirname(fullFilePath), { recursive: true })
-
-      // Copy the original file content
-      await writeFile(fullFilePath, fileContent)
+      // Save the content
+      await saveFile(fullFilePath, fileContent)
 
       // Create file record in database with the item data cached
       await createFile(user.id, {

@@ -4,6 +4,7 @@ import { transactionFormSchema } from "@/forms/transactions"
 import { ActionState } from "@/lib/actions"
 import { getCurrentUser, isSubscriptionExpired } from "@/lib/auth"
 import {
+  fullPathForFile,
   getDirectorySize,
   getTransactionFileUploadPath,
   getUserUploadsDirectory,
@@ -23,9 +24,9 @@ import {
 import { updateUser } from "@/models/users"
 import { Transaction } from "@/prisma/client"
 import { randomUUID } from "crypto"
-import { mkdir, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
+import { saveFile } from "@/lib/storage"
 
 export async function createTransactionAction(
   _prevState: ActionState<Transaction> | null,
@@ -159,10 +160,8 @@ export async function uploadTransactionFilesAction(formData: FormData): Promise<
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        const fullFilePath = safePathJoin(userUploadsDirectory, relativeFilePath)
-        await mkdir(path.dirname(fullFilePath), { recursive: true })
-
-        await writeFile(fullFilePath, buffer)
+        const fullFilePath = fullPathForFile(user, { path: relativeFilePath } as any)
+        await saveFile(fullFilePath, buffer)
 
         // Create file record in database
         const fileRecord = await createFile(user.id, {

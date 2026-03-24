@@ -1,7 +1,7 @@
-import { fileExists, fullPathForFile } from "@/lib/files"
+import { fullPathForFile } from "@/lib/files"
 import { generateFilePreviews } from "@/lib/previews/generate"
 import { File, User } from "@/prisma/client"
-import fs from "fs/promises"
+import { checkFileExists, downloadToTmp, getFileBuffer } from "@/lib/storage"
 
 const MAX_PAGES_TO_ANALYZE = 4
 
@@ -13,10 +13,15 @@ export type AnalyzeAttachment = {
 
 export const loadAttachmentsForAI = async (user: User, file: File): Promise<AnalyzeAttachment[]> => {
   const fullFilePath = fullPathForFile(user, file)
-  const isFileExists = await fileExists(fullFilePath)
+  
+  // First ensure the file exists in storage (Local or Supabase)
+  const isFileExists = await checkFileExists(fullFilePath)
   if (!isFileExists) {
-    throw new Error("File not found on disk")
+    throw new Error(`File not found in storage: ${file.path}`)
   }
+
+  // Ensure file is on local disk (/tmp on Vercel) for preprocessing tools (sharp, pdf2pic)
+  await downloadToTmp(fullFilePath, fullFilePath)
 
   const { contentType, previews } = await generateFilePreviews(user, fullFilePath, file.mimetype)
 
@@ -30,6 +35,6 @@ export const loadAttachmentsForAI = async (user: User, file: File): Promise<Anal
 }
 
 export const loadFileAsBase64 = async (filePath: string): Promise<string> => {
-  const buffer = await fs.readFile(filePath)
+  const buffer = await getFileBuffer(filePath)
   return Buffer.from(buffer).toString("base64")
 }

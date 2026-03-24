@@ -72,6 +72,14 @@ export async function fileExists(filePath: string) {
 
 export async function getDirectorySize(directoryPath: string) {
   let totalSize = 0
+  
+  // 🛡️ SERVERLESS PATCH: Don't crash if directory doesn't exist locally
+  try {
+    await access(directoryPath, constants.F_OK)
+  } catch {
+    return 0
+  }
+
   async function calculateSize(dir: string) {
     const files = await readdir(dir, { withFileTypes: true })
     for (const file of files) {
