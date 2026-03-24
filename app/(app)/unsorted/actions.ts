@@ -120,7 +120,7 @@ export async function saveFileAsTransactionAction(
 
     // 🛡️ SECURITY & INTEGRITY PATCH: CNPJ Validation
     // Scan extra fields for anything that looks like a CNPJ request
-    const extraFields = validatedForm.data.extra as Record<string, string>;
+    const extraFields = validatedForm.data as unknown as Record<string, string>;
     if (extraFields) {
       for (const [key, value] of Object.entries(extraFields)) {
         if (key.toUpperCase().includes("CNPJ") && value) {
