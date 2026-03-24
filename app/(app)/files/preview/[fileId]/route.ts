@@ -7,6 +7,8 @@ import path from "path"
 import { encodeFilename } from "@/lib/utils"
 import { checkFileExists, downloadToTmp, getFileBuffer } from "@/lib/storage"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params
   const user = await getCurrentUser()

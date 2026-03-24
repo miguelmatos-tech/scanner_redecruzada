@@ -5,6 +5,8 @@ import { getFileById } from "@/models/files"
 import { NextResponse } from "next/server"
 import { checkFileExists, getFileBuffer } from "@/lib/storage"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params
   const user = await getCurrentUser()
