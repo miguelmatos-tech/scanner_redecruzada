@@ -10,10 +10,7 @@ const envSchema = z.object({
   GOOGLE_MODEL_NAME: z.string().default("gemini-2.5-flash"),
   MISTRAL_API_KEY: z.string().optional(),
   MISTRAL_MODEL_NAME: z.string().default("mistral-medium-latest"),
-  BETTER_AUTH_SECRET: z
-    .string()
-    .min(16, "Auth secret must be at least 16 characters")
-    .default("please-set-your-key-here"),
+  BETTER_AUTH_SECRET: z.string().optional(),
   DISABLE_SIGNUP: z.enum(["true", "false"]).default("false"),
   RESEND_API_KEY: z.string().default("please-set-your-resend-api-key-here"),
   RESEND_FROM_EMAIL: z.string().default("Rede Cruzada <user@localhost>"),
@@ -23,6 +20,8 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_BUCKET_NAME: z.string().default("uploads"),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
 })
 
 const env = envSchema.parse(process.env)

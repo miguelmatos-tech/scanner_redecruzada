@@ -10,17 +10,21 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenuButton } from "@/components/ui/sidebar"
 import { UserProfile } from "@/lib/auth"
-import { authClient } from "@/lib/auth-client"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import { PLANS } from "@/lib/stripe"
 import { formatBytes } from "@/lib/utils"
 import { CreditCard, LogOut, MoreVertical, Settings, Sparkles, User } from "lucide-react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 
 export default function SidebarUser({ profile, isSelfHosted }: { profile: UserProfile; isSelfHosted: boolean }) {
+  const supabase = createClient()
+  const router = useRouter()
+
   const signOut = async () => {
-    await authClient.signOut({})
-    redirect("/")
+    await supabase.auth.signOut()
+    router.push("/enter")
+    router.refresh()
   }
 
   return (
