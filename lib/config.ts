@@ -31,7 +31,7 @@ const config = {
     title: "Rede Cruzada",
     description: "Assistente Inteligente de Notas Fiscais",
     version: process.env.npm_package_version || "0.0.1",
-    baseURL: env.BASE_URL || `http://localhost:${env.PORT || "7331"}`,
+    baseURL: (env.BASE_URL?.startsWith("http") ? env.BASE_URL : `https://${env.BASE_URL}`) || `http://localhost:${env.PORT || "7331"}`,
     supportEmail: "me@vas3k.com",
   },
   upload: {
