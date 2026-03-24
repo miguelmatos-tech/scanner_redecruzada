@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db"
+import { createUserDefaults } from "../models/defaults"
 
 async function main() {
   const email = "miguel.matos@redecruzada.org.br"
@@ -18,7 +19,10 @@ async function main() {
     },
   })
 
-  console.log(`✅ Usuário ${user.email} agora é ADMIN_GERAL no banco de dados!`)
+  console.log(`⏳ Criando configurações padrões para o usuário...`)
+  await createUserDefaults(user.id)
+
+  console.log(`✅ Usuário ${user.email} configurado com sucesso!`)
 }
 
 main()

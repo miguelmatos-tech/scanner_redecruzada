@@ -47,14 +47,14 @@ export async function getCurrentUser(): Promise<User> {
 }
 
 export function isSubscriptionExpired(user: User) {
-  if (config.selfHosted.isEnabled) {
+  if (config.selfHosted.isEnabled || user.role === "ADMIN_GERAL") {
     return false
   }
   return user.membershipExpiresAt && user.membershipExpiresAt < new Date()
 }
 
 export function isAiBalanceExhausted(user: User) {
-  if (config.selfHosted.isEnabled) {
+  if (config.selfHosted.isEnabled || user.role === "ADMIN_GERAL") {
     return false
   }
   return user.aiBalance <= 0
