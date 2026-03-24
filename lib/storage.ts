@@ -3,6 +3,8 @@ import { access, constants, mkdir, readFile, unlink, writeFile } from "fs/promis
 import path from "path"
 import config from "./config"
 
+import { FILE_UPLOAD_PATH } from "./files"
+
 const supabaseUrl = config.supabase.url || process.env.NEXT_PUBLIC_SUPABASE_URL || ""
 const supabaseKey = config.supabase.serviceRoleKey || ""
 
@@ -10,6 +12,29 @@ const supabaseKey = config.supabase.serviceRoleKey || ""
 const isValidUrl = (url: string) => url && (url.startsWith("http://") || url.startsWith("https://"))
 const supabase = isValidUrl(supabaseUrl) && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 const BUCKET_NAME = config.supabase.bucketName || "uploads"
+
+/**
+ * Standardizes a local file path into a consistent Supabase storage key.
+ * Removes local root prefixes (e.g., C:\...\uploads or /tmp/uploads) 
+ * and ensures forward slashes are used.
+ */
+function getStorageKey(filePath: string): string {
+  // 1. Normalize slashes
+  let normalizedPath = filePath.replace(/\\/g, "/")
+  const normalizedUploadPath = FILE_UPLOAD_PATH.replace(/\\/g, "/")
+
+  // 2. Strip the local upload root if present
+  if (normalizedPath.startsWith(normalizedUploadPath)) {
+    normalizedPath = normalizedPath.slice(normalizedUploadPath.length)
+  }
+
+  // 3. Remove leading slashes
+  while (normalizedPath.startsWith("/")) {
+    normalizedPath = normalizedPath.slice(1)
+  }
+
+  return normalizedPath
+}
 
 /**
  * Ensures a directory exists (used for local fallback).
@@ -28,9 +53,9 @@ async function ensureDir(filePath: string) {
  */
 export async function saveFile(filePath: string, fileContent: Buffer | string | Uint8Array) {
   if (supabase) {
-    // Standardize path for Supabase (remove leading slashes if any)
-    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-    const { error } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, fileContent, {
+    // Standardize path for Supabase
+    const storageKey = getStorageKey(filePath)
+    const { error } = await supabase.storage.from(BUCKET_NAME).upload(storageKey, fileContent, {
       upsert: true,
     })
     if (error) {
@@ -58,10 +83,10 @@ export async function getFileBuffer(filePath: string): Promise<Buffer> {
   }
 
   if (supabase) {
-    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).download(storagePath)
+    const storageKey = getStorageKey(filePath)
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).download(storageKey)
     if (error || !data) {
-      throw new Error(`Failed to download file from Supabase: ${storagePath}`)
+      throw new Error(`Failed to download file from Supabase: ${storageKey}`)
     }
     const arrayBuffer = await data.arrayBuffer()
     return Buffer.from(arrayBuffer)
@@ -76,12 +101,12 @@ export async function getFileBuffer(filePath: string): Promise<Buffer> {
  */
 export async function moveFile(oldPath: string, newPath: string) {
   if (supabase) {
-    const oldStoragePath = oldPath.startsWith("/") ? oldPath.slice(1) : oldPath
-    const newStoragePath = newPath.startsWith("/") ? newPath.slice(1) : newPath
-    const { error } = await supabase.storage.from(BUCKET_NAME).move(oldStoragePath, newStoragePath)
+    const oldStorageKey = getStorageKey(oldPath)
+    const newStorageKey = getStorageKey(newPath)
+    const { error } = await supabase.storage.from(BUCKET_NAME).move(oldStorageKey, newStorageKey)
     if (error) {
       console.error("Supabase Move Error:", error)
-      throw new Error(`Failed to move file in Supabase: ${oldStoragePath} -> ${newStoragePath}`)
+      throw new Error(`Failed to move file in Supabase: ${oldStorageKey} -> ${newStorageKey}`)
     }
   } else {
     const { copyFile, unlink } = await import("fs/promises")
@@ -96,8 +121,8 @@ export async function moveFile(oldPath: string, newPath: string) {
  */
 export async function removeFile(filePath: string) {
   if (supabase) {
-    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-    const { error } = await supabase.storage.from(BUCKET_NAME).remove([storagePath])
+    const storageKey = getStorageKey(filePath)
+    const { error } = await supabase.storage.from(BUCKET_NAME).remove([storageKey])
     if (error) {
       console.error("Supabase Remove Error:", error)
     }
@@ -134,8 +159,8 @@ export async function downloadToTmp(storagePath: string, localPath: string) {
  */
 export async function getFileUrl(filePath: string, expiresIn: number = 3600): Promise<string> {
   if (supabase) {
-    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(storagePath, expiresIn)
+    const storageKey = getStorageKey(filePath)
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(storageKey, expiresIn)
     if (error || !data) {
       throw new Error("Failed to generate signed url")
     }
@@ -159,9 +184,9 @@ export async function checkFileExists(filePath: string): Promise<boolean> {
   }
 
   if (supabase) {
-    const storagePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-    const dir = path.dirname(storagePath)
-    const fileName = path.basename(storagePath)
+    const storageKey = getStorageKey(filePath)
+    const dir = path.dirname(storageKey)
+    const fileName = path.basename(storageKey)
     const { data, error } = await supabase.storage.from(BUCKET_NAME).list(dir === "." ? "" : dir, {
       search: fileName,
     })
