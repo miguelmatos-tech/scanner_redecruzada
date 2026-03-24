@@ -6,7 +6,9 @@ import config from "./config"
 const supabaseUrl = config.supabase.url || process.env.NEXT_PUBLIC_SUPABASE_URL || ""
 const supabaseKey = config.supabase.serviceRoleKey || ""
 
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
+// 🛡️ DEFENSE: Ensure URL is valid before creating client to avoid Vercel build errors
+const isValidUrl = (url: string) => url && (url.startsWith("http://") || url.startsWith("https://"))
+const supabase = isValidUrl(supabaseUrl) && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 const BUCKET_NAME = config.supabase.bucketName || "uploads"
 
 /**
