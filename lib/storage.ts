@@ -5,13 +5,15 @@ import config from "./config"
 
 import { FILE_UPLOAD_PATH } from "./files"
 
-const supabaseUrl = config.supabase.url || process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseKey = config.supabase.serviceRoleKey || ""
+const sanitizeEnv = (val: string | undefined): string => val ? val.replace(/^["']|["']$/g, "").trim() : ""
 
-// 🛡️ DEFENSE: Ensure URL is valid before creating client to avoid Vercel build errors
+const supabaseUrl = sanitizeEnv(config.supabase.url || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)
+const supabaseKey = sanitizeEnv(config.supabase.serviceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+// 🛡️ DEFENSE: Ensure URL is valid before creating client
 const isValidUrl = (url: string) => url && (url.startsWith("http://") || url.startsWith("https://"))
 const supabase = isValidUrl(supabaseUrl) && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-const BUCKET_NAME = config.supabase.bucketName || "uploads"
+const BUCKET_NAME = sanitizeEnv(config.supabase.bucketName || process.env.SUPABASE_BUCKET_NAME) || "uploads"
 
 /**
  * Standardizes a local file path into a consistent Supabase storage key.
