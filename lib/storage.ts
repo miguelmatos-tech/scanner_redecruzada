@@ -23,8 +23,8 @@ function getStorageKey(filePath: string): string {
   let normalizedPath = filePath.replace(/\\/g, "/")
   const normalizedUploadPath = FILE_UPLOAD_PATH.replace(/\\/g, "/")
 
-  // 2. Strip the local upload root if present
-  if (normalizedPath.startsWith(normalizedUploadPath)) {
+  // 2. Strip the local upload root if present (case-insensitive for Windows)
+  if (normalizedPath.toLowerCase().startsWith(normalizedUploadPath.toLowerCase())) {
     normalizedPath = normalizedPath.slice(normalizedUploadPath.length)
   }
 
@@ -185,7 +185,7 @@ export async function checkFileExists(filePath: string): Promise<boolean> {
 
   if (supabase) {
     const storageKey = getStorageKey(filePath)
-    const dir = path.dirname(storageKey)
+    const dir = path.dirname(storageKey).replace(/\\/g, "/")
     const fileName = path.basename(storageKey)
     const { data, error } = await supabase.storage.from(BUCKET_NAME).list(dir === "." ? "" : dir, {
       search: fileName,
