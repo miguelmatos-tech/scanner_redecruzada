@@ -31,7 +31,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser()
-  const unsortedFilesCount = await getUnsortedFilesCount(user.id)
+  let unsortedFilesCount = 0
+  try {
+    unsortedFilesCount = await getUnsortedFilesCount(user.id)
+  } catch (error) {
+    console.error("Failed to fetch unsorted files count:", error)
+  }
 
   const userProfile = {
     id: user.id,
