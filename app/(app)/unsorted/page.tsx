@@ -29,13 +29,23 @@ export default async function UnsortedPage({ searchParams }: { searchParams: Pro
   const limit = 10
   const offset = ((parseInt(page || "1") ?? 1) - 1) * limit
 
-  const files = await getUnsortedFiles(user.id, { limit, offset })
-  const totalFilesCount = await getUnsortedFilesCount(user.id)
-  const categories = await getCategories(user.id)
-  const projects = await getProjects(user.id)
-  const currencies = await getCurrencies(user.id)
-  const fields = await getFields(user.id)
-  const settings = await getSettings(user.id)
+  const [
+    files,
+    totalFilesCount,
+    categories,
+    projects,
+    currencies,
+    fields,
+    settings
+  ] = await Promise.all([
+    getUnsortedFiles(user.id, { limit, offset }),
+    getUnsortedFilesCount(user.id),
+    getCategories(user.id),
+    getProjects(user.id),
+    getCurrencies(user.id),
+    getFields(user.id),
+    getSettings(user.id),
+  ])
 
   return (
     <>

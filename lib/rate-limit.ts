@@ -32,8 +32,8 @@ export class RateLimiter {
   }
 }
 
-// Global instance for AI analysis (e.g., 5 requests per minute per user)
-export const aiRateLimiter = new RateLimiter(5, 60 * 1000);
+// Global instance for AI analysis (e.g., 20 requests per minute per user)
+export const aiRateLimiter = new RateLimiter(20, 60 * 1000);
 
 // Global instance for File uploads (e.g., 20 requests per minute per user)
 export const fileUploadRateLimiter = new RateLimiter(20, 60 * 1000);

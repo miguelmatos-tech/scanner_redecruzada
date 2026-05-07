@@ -98,17 +98,19 @@ export const getTransactions = cache(
     }
 
     if (pagination) {
-      const total = await prisma.transaction.count({ where })
-      const transactions = await prisma.transaction.findMany({
-        where,
-        include: {
-          category: true,
-          project: true,
-        },
-        orderBy,
-        take: pagination?.limit,
-        skip: pagination?.offset,
-      })
+      const [total, transactions] = await Promise.all([
+        prisma.transaction.count({ where }),
+        prisma.transaction.findMany({
+          where,
+          include: {
+            category: true,
+            project: true,
+          },
+          orderBy,
+          take: pagination?.limit,
+          skip: pagination?.offset,
+        })
+      ])
       return { transactions, total }
     } else {
       const transactions = await prisma.transaction.findMany({
