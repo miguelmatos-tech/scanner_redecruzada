@@ -51,7 +51,15 @@ export default async function UnsortedPage({ searchParams }: { searchParams: Pro
     <>
       <header className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Você tem {totalFilesCount} arquivos pendentes</h2>
-        {totalFilesCount > 1 && <AnalyzeAllButton />}
+        {totalFilesCount > 1 && (
+          <AnalyzeAllButton 
+            fileIds={files.map(f => f.id)} 
+            settings={settings}
+            fields={fields}
+            categories={categories}
+            projects={projects}
+          />
+        )}
       </header>
 
       {config.selfHosted.isEnabled &&

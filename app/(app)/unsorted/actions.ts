@@ -27,6 +27,7 @@ import { aiRateLimiter } from "@/lib/rate-limit"
 import { isValidCNPJ } from "@/lib/cnpj-validator"
 import { parseNfeXml } from "@/lib/nfe-parser"
 import { getFileBuffer, moveFile, saveFile } from "@/lib/storage"
+import { getSettings } from "@/models/settings"
 
 export async function analyzeFileAction(
   file: File,
@@ -253,4 +254,30 @@ export async function splitFileIntoItemsAction(
     console.error("Failed to split file into items:", error)
     return { success: false, error: `Failed to split file into items: ${error}` }
   }
+}
+export async function analyzeAllFilesAction(
+  fileIds: string[],
+  settings: Record<string, string>,
+  fields: Field[],
+  categories: Category[],
+  projects: Project[]
+): Promise<ActionState<Record<string, AnalysisResult>>> {
+  const user = await getCurrentUser()
+  const results: Record<string, AnalysisResult> = {}
+  
+  // Limita a 10 arquivos por vez para não estourar timeout da Vercel
+  const batch = fileIds.slice(0, 10)
+  
+  await Promise.all(batch.map(async (id) => {
+    const file = await getFileById(id, user.id)
+    if (file) {
+      const res = await analyzeFileAction(file, settings, fields, categories, projects)
+      if (res.success && res.data) {
+        results[id] = res.data
+      }
+    }
+  }))
+
+  revalidatePath("/unsorted")
+  return { success: true, data: results }
 }

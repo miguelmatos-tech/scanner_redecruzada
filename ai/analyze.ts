@@ -16,9 +16,10 @@ export async function analyzeTransaction(
   schema: Record<string, unknown>,
   attachments: AnalyzeAttachment[],
   fileId: string,
-  userId: string
+  userId: string,
+  preloadedSettings?: any
 ): Promise<ActionState<AnalysisResult>> {
-  const settings = await getSettings(userId)
+  const settings = preloadedSettings || await getSettings(userId)
   const llmSettings = getLLMSettings(settings)
 
   try {
