@@ -26,11 +26,14 @@ function getStorageKey(filePath: string): string {
   const normalizedUploadPath = FILE_UPLOAD_PATH.replace(/\\/g, "/")
 
   // 2. Strip the local upload root if present (case-insensitive for Windows)
-  if (normalizedPath.toLowerCase().startsWith(normalizedUploadPath.toLowerCase())) {
+  if (normalizedPath.toLowerCase().includes("/uploads/")) {
+    const parts = normalizedPath.split("/uploads/")
+    normalizedPath = parts[parts.length - 1]
+  } else if (normalizedPath.toLowerCase().startsWith(normalizedUploadPath.toLowerCase())) {
     normalizedPath = normalizedPath.slice(normalizedUploadPath.length)
   }
 
-  // 3. Remove leading slashes
+  // 3. Remove leading slashes and any user-email prefix if it's redundant
   while (normalizedPath.startsWith("/")) {
     normalizedPath = normalizedPath.slice(1)
   }
