@@ -250,6 +250,201 @@ export async function splitFileIntoItemsAction(
 
     revalidatePath("/unsorted")
     return { success: true }
+    return {
+      success: false,
+      error: "Your subscription has expired, please upgrade your account or buy new subscription plan",
+    }
+  }
+
+  let attachments: AnalyzeAttachment[] = []
+  try {
+    attachments = await loadAttachmentsForAI(user, file)
+  } catch (error) {
+    console.error("Failed to retrieve files:", error)
+    return { success: false, error: "Failed to retrieve files: " + error }
+  }
+
+  const prompt = buildLLMPrompt(
+    settings.prompt_analyse_new_file || DEFAULT_PROMPT_ANALYSE_NEW_FILE,
+    fields,
+    categories,
+    projects,
+    file.filename
+  )
+
+  const schema = fieldsToJsonSchema(fields)
+
+  // 🛡️ BRAZILIAN NF-e EXTENSION: Try to parse XML instantly avoiding AI costs.
+  let results: ActionState<AnalysisResult>;
+  
+  if (file.mimetype.includes("xml")) {
+    const fullFilePath = fullPathForFile(user, file)
+    const fileContent = (await getFileBuffer(fullFilePath)).toString("utf8")
+    const parsedData = parseNfeXml(fileContent)
+    
+    if (parsedData) {
+      console.log("Successfully parsed XML locally, skipped LLM!");
+      await updateFile(file.id, user.id, { cachedParseResult: parsedData.output })
+      results = { success: true, data: parsedData };
+    } else {
+      results = await analyzeTransaction(prompt, schema, attachments, file.id, user.id)
+    }
+  } else {
+    results = await analyzeTransaction(prompt, schema, attachments, file.id, user.id)
+  }
+
+  console.log("Analysis results:", results)
+
+  if (results.data?.tokensUsed && results.data.tokensUsed > 0) {
+    await updateUser(user.id, { aiBalance: { decrement: 1 } })
+  }
+
+  return results
+}
+
+export async function saveFileAsTransactionAction(
+  _prevState: ActionState<Transaction> | null,
+  formData: FormData
+): Promise<ActionState<Transaction>> {
+  try {
+    const user = await getCurrentUser()
+    const validatedForm = transactionFormSchema.safeParse(Object.fromEntries(formData.entries()))
+
+    if (!validatedForm.success) {
+      return { success: false, error: validatedForm.error.message }
+    }
+
+    // 🛡️ SECURITY & INTEGRITY PATCH: CNPJ Validation
+    // Scan extra fields for anything that looks like a CNPJ request
+    const extraFields = validatedForm.data as unknown as Record<string, string>;
+    if (extraFields) {
+      for (const [key, value] of Object.entries(extraFields)) {
+        if (key.toUpperCase().includes("CNPJ") && value) {
+          if (!isValidCNPJ(value.toString())) {
+            return { success: false, error: `🚨 CNPJ Inválido lido pela IA (${value}). Por favor, corrija manualmente antes de salvar.` }
+          }
+        }
+      }
+    }
+
+    // Get the file record
+    const fileId = formData.get("fileId") as string
+    const file = await getFileById(fileId, user.id)
+    if (!file) throw new Error("File not found")
+
+    // Create transaction
+    const transaction = await createTransaction(user.id, validatedForm.data)
+
+    // Move file to processed location
+    const userUploadsDirectory = getUserUploadsDirectory(user)
+    const originalFileName = path.basename(file.path)
+    const newRelativeFilePath = getTransactionFileUploadPath(file.id, originalFileName, transaction)
+
+    // Move file to new location and name
+    const oldFullFilePath = fullPathForFile(user, file)
+    const newFullFilePath = fullPathForFile(user, { ...file, path: newRelativeFilePath } as File)
+    
+    await moveFile(oldFullFilePath, newFullFilePath)
+
+    // Update file record
+    await updateFile(file.id, user.id, {
+      path: newRelativeFilePath,
+      isReviewed: true,
+    })
+
+    await updateTransactionFiles(transaction.id, user.id, [file.id])
+
+    revalidatePath("/unsorted")
+    revalidatePath("/transactions")
+
+    return { success: true, data: transaction }
+  } catch (error) {
+    console.error("Failed to save transaction:", error)
+    return { success: false, error: `Failed to save transaction: ${error}` }
+  }
+}
+
+export async function deleteUnsortedFileAction(
+  _prevState: ActionState<Transaction> | null,
+  fileId: string
+): Promise<ActionState<Transaction>> {
+  try {
+    const user = await getCurrentUser()
+    await deleteFile(fileId, user.id)
+    revalidatePath("/unsorted")
+    return { success: true }
+  } catch (error) {
+    console.error("Failed to delete file:", error)
+    return { success: false, error: "Failed to delete file" }
+  }
+}
+
+export async function splitFileIntoItemsAction(
+  _prevState: ActionState<null> | null,
+  formData: FormData
+): Promise<ActionState<null>> {
+  try {
+    const user = await getCurrentUser()
+    const fileId = formData.get("fileId") as string
+    const items = JSON.parse(formData.get("items") as string) as TransactionData[]
+
+    if (!fileId || !items || items.length === 0) {
+      return { success: false, error: "File ID and items are required" }
+    }
+
+    // Get the original file
+    const originalFile = await getFileById(fileId, user.id)
+    if (!originalFile) {
+      return { success: false, error: "Original file not found" }
+    }
+
+    // Get the original file's content
+    const originalFilePath = fullPathForFile(user, originalFile)
+    const fileContent = await getFileBuffer(originalFilePath)
+
+    // Create a new file for each item
+    for (const item of items) {
+      const fileUuid = randomUUID()
+      const fileName = `${originalFile.filename}-part-${item.name}`
+      const relativeFilePath = unsortedFilePath(fileUuid, fileName)
+      const fullFilePath = fullPathForFile(user, { path: relativeFilePath } as File)
+
+      // Save the content
+      await saveFile(fullFilePath, fileContent)
+
+      // Create file record in database with the item data cached
+      await createFile(user.id, {
+        id: fileUuid,
+        filename: fileName,
+        path: relativeFilePath,
+        mimetype: originalFile.mimetype,
+        metadata: originalFile.metadata,
+        isSplitted: true,
+        cachedParseResult: {
+          name: item.name,
+          merchant: item.merchant,
+          description: item.description,
+          total: item.total,
+          currencyCode: item.currencyCode,
+          categoryCode: item.categoryCode,
+          projectCode: item.projectCode,
+          type: item.type,
+          issuedAt: item.issuedAt,
+          note: item.note,
+          text: item.text,
+        },
+      })
+    }
+
+    // Delete the original file
+    await deleteFile(fileId, user.id)
+
+    // Update user storage used
+    const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
+    await updateUser(user.id, { storageUsed })
+
+    revalidatePath("/unsorted")
+    return { success: true }
   } catch (error) {
     console.error("Failed to split file into items:", error)
     return { success: false, error: `Failed to split file into items: ${error}` }
@@ -265,16 +460,24 @@ export async function analyzeAllFilesAction(
   const user = await getCurrentUser()
   const results: Record<string, AnalysisResult> = {}
   
-  // Limita a 10 arquivos por vez para não estourar timeout da Vercel
-  const batch = fileIds.slice(0, 10)
-  
-  await Promise.all(batch.map(async (id) => {
-    const file = await getFileById(id, user.id)
-    if (file) {
+  // OTIMIZAÇÃO: Busca todos os arquivos em uma única query
+  const batchIds = fileIds.slice(0, 10)
+  const files = await prisma.file.findMany({
+    where: { 
+      id: { in: batchIds },
+      userId: user.id
+    }
+  })
+
+  // Executa as análises em paralelo
+  await Promise.all(files.map(async (file) => {
+    try {
       const res = await analyzeFileAction(file, settings, fields, categories, projects)
       if (res.success && res.data) {
-        results[id] = res.data
+        results[file.id] = res.data
       }
+    } catch (e) {
+      console.error(`Erro ao analisar arquivo ${file.id}:`, e)
     }
   }))
 
