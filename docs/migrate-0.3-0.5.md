@@ -11,7 +11,7 @@ Here's how to migrate properly:
 ```yaml
 services:
   app:
-    image: ghcr.io/vas3k/taxhacker:v0.3.0
+    image: ghcr.io/vas3k/ScannerPDF:v0.3.0
     ports:
       - "7331:7331"
       
@@ -29,14 +29,14 @@ Go to your app -> Settings -> Backups -> Download Data Archive
 
 Save .zip archive on your machine. 
 
-## Step 3: Upgrade your TaxHacker instance
+## Step 3: Upgrade your ScannerPDF instance
 
 Update your docker compose to latest version again.
 
 ```yaml
 services:
   app:
-    image: ghcr.io/vas3k/taxhacker:latest
+    image: ghcr.io/vas3k/ScannerPDF:latest
     ports:
       - "7331:7331"
       
@@ -52,3 +52,4 @@ Open your app -> Settings -> Backups -> Restore from a backup
 Upload your zip archive and click restore. After couple of seconds it must show you import stats.
 
 If import fails with an error about file size, go to [next.config.ts](./next.config.ts) and change `bodySizeLimit: "256mb"` to something bigger.
+

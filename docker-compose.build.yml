@@ -9,7 +9,7 @@ services:
       - NODE_ENV=production
       - SELF_HOSTED_MODE=true
       - UPLOAD_PATH=/app/data/uploads
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/taxhacker
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ScannerPDF
     volumes:
       - ./data:/app/data
     restart: unless-stopped
@@ -21,11 +21,11 @@ services:
 
   postgres:
     image: postgres:17-alpine
-    container_name: taxhacker-postgres
+    container_name: ScannerPDF-postgres
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=taxhacker
+      - POSTGRES_DB=ScannerPDF
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -36,3 +36,4 @@ services:
       options:
         max-size: "100M"
         max-file: "3"
+

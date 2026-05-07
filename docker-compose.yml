@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/vas3k/taxhacker:latest
+    image: ghcr.io/vas3k/ScannerPDF:latest
     ports:
       - "7331:7331"
     environment:
@@ -51,3 +51,4 @@ services:
       - ./pgbackups:/backups
     depends_on:
       - postgres
+

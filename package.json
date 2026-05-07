@@ -1,5 +1,5 @@
 {
-  "name": "taxhacker",
+  "name": "ScannerPDF",
   "version": "0.5.5",
   "private": true,
   "type": "module",
@@ -79,3 +79,4 @@
     }
   }
 }
+
