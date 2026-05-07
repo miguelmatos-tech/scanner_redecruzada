@@ -6,7 +6,7 @@ import path from "path"
 import { cache } from "react"
 import { getTransactionById } from "./transactions"
 
-export const getUnsortedFiles = cache(async (userId: string) => {
+export const getUnsortedFiles = cache(async (userId: string, options?: { limit?: number; offset?: number }) => {
   const user = await prisma.user.findUnique({ where: { id: userId } })
   const where: any = { isReviewed: false }
   
@@ -23,6 +23,8 @@ export const getUnsortedFiles = cache(async (userId: string) => {
     orderBy: {
       createdAt: "desc",
     },
+    take: options?.limit,
+    skip: options?.offset,
   })
 })
 

@@ -6,9 +6,16 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -46,9 +53,22 @@ export async function updateSession(request: NextRequest) {
   // 4. Return myNewResponse
   // The above is true for both successful and error responses.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    // 3-second timeout to prevent Vercel 504 Gateway Timeout (MIDDLEWARE_INVOCATION_TIMEOUT)
+    const getUserPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise<{ data: { user: any }, error: any }>((_, reject) =>
+      setTimeout(() => reject(new Error('Supabase Auth Timeout')), 3000)
+    )
+
+    const response = await Promise.race([getUserPromise, timeoutPromise])
+    user = response.data.user
+  } catch (error) {
+    console.error("Middleware getUser timeout/error, falling back to getSession:", error)
+    // Fallback to getSession which relies on the local cookie (faster, no network request)
+    const { data: { session } } = await supabase.auth.getSession()
+    user = session?.user || null
+  }
 
   const isEnterPage = request.nextUrl.pathname.startsWith('/enter')
 

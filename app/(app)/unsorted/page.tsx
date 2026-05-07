@@ -3,6 +3,7 @@ import { UploadButton } from "@/components/files/upload-button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Pagination } from "@/components/transactions/pagination"
 import { AnalyzeAllButton } from "@/components/unsorted/analyze-all-button"
 import AnalyzeForm from "@/components/unsorted/analyze-form"
 import { getCurrentUser } from "@/lib/auth"
@@ -10,7 +11,7 @@ import config from "@/lib/config"
 import { getCategories } from "@/models/categories"
 import { getCurrencies } from "@/models/currencies"
 import { getFields } from "@/models/fields"
-import { getUnsortedFiles } from "@/models/files"
+import { getUnsortedFiles, getUnsortedFilesCount } from "@/models/files"
 import { getProjects } from "@/models/projects"
 import { getSettings } from "@/models/settings"
 import { FileText, PartyPopper, Settings, Upload } from "lucide-react"
@@ -22,9 +23,14 @@ export const metadata: Metadata = {
   description: "Analisar arquivos pendentes",
 }
 
-export default async function UnsortedPage() {
+export default async function UnsortedPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const { page } = await searchParams
   const user = await getCurrentUser()
-  const files = await getUnsortedFiles(user.id)
+  const limit = 10
+  const offset = ((parseInt(page || "1") ?? 1) - 1) * limit
+
+  const files = await getUnsortedFiles(user.id, { limit, offset })
+  const totalFilesCount = await getUnsortedFilesCount(user.id)
   const categories = await getCategories(user.id)
   const projects = await getProjects(user.id)
   const currencies = await getCurrencies(user.id)
@@ -34,8 +40,8 @@ export default async function UnsortedPage() {
   return (
     <>
       <header className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Você tem {files.length} arquivos pendentes</h2>
-        {files.length > 1 && <AnalyzeAllButton />}
+        <h2 className="text-3xl font-bold tracking-tight">Você tem {totalFilesCount} arquivos pendentes</h2>
+        {totalFilesCount > 1 && <AnalyzeAllButton />}
       </header>
 
       {config.selfHosted.isEnabled &&
@@ -83,7 +89,7 @@ export default async function UnsortedPage() {
             </div>
           </Card>
         ))}
-        {files.length == 0 && (
+        {totalFilesCount == 0 && (
           <div className="flex flex-col items-center justify-center gap-2 h-full min-h-[600px]">
             <PartyPopper className="w-12 h-12 text-muted-foreground" />
             <p className="pt-4 text-muted-foreground">Tudo limpo! Parabéns!</p>
@@ -105,6 +111,8 @@ export default async function UnsortedPage() {
             </div>
           </div>
         )}
+
+        {totalFilesCount > limit && <Pagination totalItems={totalFilesCount} itemsPerPage={limit} />}
       </main>
     </>
   )

@@ -37,10 +37,14 @@ export async function getCurrentUser(): Promise<User> {
   }
 
   const session = await getSession()
-  if (session && session.user) {
-    const user = await getUserByEmail(session.user.email!)
-    if (user) {
-      return user
+  if (session && session.user && session.user.email) {
+    try {
+      const user = await getUserByEmail(session.user.email)
+      if (user) {
+        return user
+      }
+    } catch (error) {
+      console.error("Erro ao buscar usuário no banco:", error)
     }
   }
 
