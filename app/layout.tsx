@@ -15,9 +15,12 @@ export const metadata: Metadata = {
   },
   description: config.app.description,
   icons: {
-    icon: "/logo/256.png",
-    shortcut: "/logo/256.png",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/favicon.ico?v=2" },
+      { url: "/logo/256.png?v=2", sizes: "256x256", type: "image/png" }
+    ],
+    shortcut: "/favicon.ico?v=2",
+    apple: "/apple-touch-icon.png?v=2",
   },
   manifest: "/site.webmanifest",
   metadataBase: new URL(config.app.baseURL),
